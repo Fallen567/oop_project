@@ -189,6 +189,8 @@ class Ingredient {
 }
 
 class Inventory {
+    // aggregation , even though Ingredient[] is private and the constructor creates it itself , we still have a getter
+    // for the array in the class which allows the user to retrieve reference of the aggregated object 
     private final Ingredient[] ingredients;  // array will contain an object for every TYPE of ingredient
     private final int size; // we will predefine size e.g our ramen takes 4 main ingredients that need restocking everyday
 
