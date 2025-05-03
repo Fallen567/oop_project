@@ -24,6 +24,69 @@ class FileReader {
     }
 }
 
+// normally if we pass money (type int or double) into a function its passed by value so any changes made to it are made to the copy
+// to solve this we can treat int money as an OBJECT , this way it will be passed to functions by reference and any changes
+// made to money inside function will also take effect outside the function
+// for this reason this class is used JUST so that money can be treated as an object instead of integer
+class Money{
+    private double money;
+
+    public Money(){
+        this.money = 0;
+    }
+    public Money(double m){
+        this.money = m;
+    }
+    public double get_money(){
+        return this.money;
+    }
+    public void change_money(double change){
+        this.money = this.money + change;
+        // ensuring money doesnt go negative during restocks
+        if (this.money < 0){
+            this.money = 0;
+        }
+    }
+}
+
+// wrapper class for suspicion so we can change suspicion in methods
+class Suspicion{
+    private int suspicion;
+
+    public Suspicion(){
+        this.suspicion = 0;
+    }
+    public Suspicion(int s){
+        this.suspicion = s;
+    }
+    public int get_suspicion(){
+        return this.suspicion;
+    }
+    public void change_suspicion(int change){
+        this.suspicion = this.suspicion + change;
+        if (this.suspicion >= 100){
+            this.suspicion = 100;
+        }
+    }
+    public boolean sus_reached_full(){
+        if(this.suspicion >= 100){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+    // after a day ends we can call this function with the day number as argument and it will start new day with the appropriate suspicion
+    public void suspicion_newday(int day){
+        if(day == 2){
+            this.suspicion = 20;
+        }
+        else if(day == 3){
+            this.suspicion = 30;
+        }
+    }
+}
+
 abstract class Customer {
     // protected so we can access these in subclasses without the getters
     protected String name;
@@ -42,7 +105,9 @@ abstract class Customer {
         return dialogue;
     }
     public abstract boolean is_gambler(); // this will be implemented in all subclasses as it checks whether the user guessed right or wrong
-    public abstract double get_money(); // each subclass will have separate implementation using separate amount of money
+    public abstract void get_money(Money m); // each subclass will have separate implementation using separate amount of money, this method will change money variable\
+    public abstract void right_room(Suspicion s);
+    public abstract void wrong_room(Suspicion s);
 }
 
 class NormalCustomer extends Customer {
@@ -65,8 +130,17 @@ class NormalCustomer extends Customer {
         return false;
     }
     // arbitrary value for now we can change later
-    @Override public double get_money(){
-        return 10;
+    @Override public void get_money(Money m){
+        // increment money by 10
+        m.change_money(10);
+    }
+
+    // two suspicion methods , 1 for sending normalcustomer to right room and 1 for wrong room
+    @Override public void right_room(Suspicion s){
+        s.change_suspicion(-10);
+    }
+    @Override public void wrong_room(Suspicion s){
+        s.change_suspicion(20);
     }
 }
 
@@ -90,8 +164,16 @@ class GamblerCustomer extends Customer {
         return true;
     }
     // arbitrary value for now we can change later , slight bonus for correct answer on gambler
-    @Override public double get_money(){
-        return 20;
+    @Override public void get_money(Money m){
+        m.change_money(20);
+    }
+
+    // 2 suspicion methods , 1 for right room 1 for wrong room
+    @Override public void right_room(Suspicion s){
+        s.change_suspicion(-10);
+    }
+    @Override public void wrong_room(Suspicion s){
+        s.change_suspicion(20);
     }
 }
 
@@ -134,8 +216,21 @@ class UndercoverCop extends SpecialCustomer implements UndercovercopMarker {
         System.out.println("The undercover cop arrested you. GAME OVER.");
     }
     // arbitrary value for now , alot bonus for correct answer on cop
-    @Override public double get_money(){
-        return 40;
+    @Override public void get_money(Money m){
+        m.change_money(40);
+    }
+
+    // 2 functions for suspicion 1 for right room 1 for wrong , no need to use wrong one if we will end the game right away
+    @Override public void right_room(Suspicion s){
+        s.change_suspicion(-15);
+    }
+    @Override public void wrong_room(Suspicion s){
+        s.change_suspicion(100);
+    }
+
+    // bribing if getting caught method will decrement required amount from money
+    public void bribing(Money m){
+        m.change_money(-100);
     }
 }
 
@@ -190,7 +285,7 @@ class Ingredient {
 
 class Inventory {
     // aggregation , even though Ingredient[] is private and the constructor creates it itself , we still have a getter
-    // for the array in the class which allows the user to retrieve reference of the aggregated object 
+    // for the array in the class which allows the user to retrieve reference of the aggregated object
     private final Ingredient[] ingredients;  // array will contain an object for every TYPE of ingredient
     private final int size; // we will predefine size e.g our ramen takes 4 main ingredients that need restocking everyday
 
