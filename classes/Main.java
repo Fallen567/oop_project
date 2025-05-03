@@ -1,9 +1,8 @@
-import java.lang.*;
-import java.util.*;
 import java.io.IOException;
+import java.lang.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.*;
 
 // print statements for testing , need to remove after gui done
 
@@ -52,8 +51,8 @@ class NormalCustomer extends Customer {
 
     // this method will be run automatically  when this class is loaded all of the names , dialogues from txt file will be loaded into the array list at once
     static {
-        NormalCustomerNames = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\names.txt"); // insert your own computer path of file
-        NormalCustomerDialogues = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\dialogues.txt");
+        NormalCustomerNames = FileReader.read_from_file("classes/names.txt");
+        NormalCustomerDialogues = FileReader.read_from_file("classes/customer_dialogues.txt"); 
     }
 
     // the constructor will call the superconstructor and will pass in a random name and a random dialogue extracted from txt file and stored in array list
@@ -77,8 +76,9 @@ class GamblerCustomer extends Customer {
 
     // this is a method that will be run automatically  when this class is loaded, so all of the names , dialogues from txt file will be loaded into the array list at once
     static {
-        gambler_names = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\names.txt");
-        gambler_dialogues = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\dialogues.txt");
+        gambler_names = FileReader.read_from_file("classes/names.txt");
+        gambler_dialogues = FileReader.read_from_file("classes/gambler_dialogues.txt");
+    // we can add more gambler dialogues later if we want to
     }
 
     // the constructor will call the superconstructor and will pass in a random name and a random dialogue extracted from txt file and stored in array list
@@ -112,8 +112,8 @@ class UndercoverCop extends SpecialCustomer implements UndercovercopMarker {
 
     // this is a method that will be run automatically  when this class is loaded, so all of the names , dialogues from txt file will be loaded into the array list at once
     static {
-        cop_names = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\names.txt");
-        cop_dialogues = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\dialogues.txt");
+        cop_names = FileReader.read_from_file("classes/names.txt");
+        cop_dialogues = FileReader.read_from_file("classes/cop_dialogues.txt");
     }
 
     // the constructor will call the superconstructor and will pass in a random name and a random dialogue extracted from txt file and stored in array list
@@ -275,5 +275,15 @@ class Shop {
     }
     public Inventory getInventory() {
         return inventory;
+    }
+    public void decreaseInventory() {
+        Inventory inventory = getInventory(); // `getInventory()` returns the inventory object
+        for (int i = 0; i < 4; i++) { // Hardcoded there are 4 types of ingredients
+            Ingredient ingredient = inventory.get_ingredient(i);
+            if (ingredient != null) {
+                ingredient.useQuantity(1); // Decrease 1 unit of each ingredient
+            }
+        }
+        System.out.println("Ingredients used for serving ramen have been deducted from inventory.");
     }
 }
