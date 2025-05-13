@@ -124,14 +124,15 @@ class Suspicion{
             return false;
         }
     }
-    // after a day ends we can call this function with the day number as argument and it will start new day with the appropriate suspicion
-    public void suspicion_newday(int day){
-        if(day == 2){
-            this.suspicion = 20;
+    // after a day ends we can call this function with the day number as argument
+    // 'dayJustFinished' is the day number that has just concluded.
+    public void suspicion_newday(int dayJustFinished) {
+        if (dayJustFinished == 1) { // After day 1 ends (for the start of day 2)
+            this.change_suspicion(20); // Add 20 to current suspicion
+        } else if (dayJustFinished == 2) { // After day 2 ends (for the start of day 3)
+            this.change_suspicion(30); // Add 30 to current suspicion
         }
-        else if(day == 3){
-            this.suspicion = 30;
-        }
+        // No action for other days, or if dayJustFinished is 0 or >= 3
     }
 }
 
@@ -165,8 +166,8 @@ class NormalCustomer extends Customer {
 
     // this method will be run automatically  when this class is loaded all of the names , dialogues from txt file will be loaded into the array list at once
     static {
-        NormalCustomerNames = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\names.txt"); // insert your own computer path of file
-        NormalCustomerDialogues = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\dialogues.txt");
+        NormalCustomerNames = FileReader.read_from_file("classes/names.txt"); // Adjusted path
+        NormalCustomerDialogues = FileReader.read_from_file("classes/customer_dialogues.txt"); // Adjusted path
     }
 
     // the constructor will call the superconstructor and will pass in a random name and a random dialogue extracted from txt file and stored in array list
@@ -199,8 +200,8 @@ class GamblerCustomer extends Customer {
 
     // this is a method that will be run automatically  when this class is loaded, so all of the names , dialogues from txt file will be loaded into the array list at once
     static {
-        gambler_names = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\names.txt");
-        gambler_dialogues = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\dialogues.txt");
+        gambler_names = FileReader.read_from_file("classes/names.txt"); // Adjusted path
+        gambler_dialogues = FileReader.read_from_file("classes/gambler_dialogues.txt"); // Adjusted path
     }
 
     // the constructor will call the superconstructor and will pass in a random name and a random dialogue extracted from txt file and stored in array list
@@ -218,10 +219,10 @@ class GamblerCustomer extends Customer {
 
     // 2 suspicion methods , 1 for right room 1 for wrong room
     @Override public void right_room(Suspicion s){
-        s.change_suspicion(s.get_gamblercustomersusdecrease());
+        s.change_suspicion(s.get_gamblercustomersusincrease());
     }
     @Override public void wrong_room(Suspicion s){
-        s.change_suspicion(s.get_gamblercustomersusincrease());
+        // NOW, sending a gambler to the ramen shop does NOTHING to suspicion
     }
 }
 
@@ -242,8 +243,8 @@ class UndercoverCop extends SpecialCustomer implements UndercovercopMarker {
 
     // this is a method that will be run automatically  when this class is loaded, so all of the names , dialogues from txt file will be loaded into the array list at once
     static {
-        cop_names = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\names.txt");
-        cop_dialogues = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\dialogues.txt");
+        cop_names = FileReader.read_from_file("classes/names.txt"); // Adjusted path
+        cop_dialogues = FileReader.read_from_file("classes/cop_dialogues.txt"); // Adjusted path
     }
 
     // the constructor will call the superconstructor and will pass in a random name and a random dialogue extracted from txt file and stored in array list
@@ -261,7 +262,7 @@ class UndercoverCop extends SpecialCustomer implements UndercovercopMarker {
     }
     // undercover special event should end the game and so we will need to pass in the main game object of the game class
     @Override public void trigger_special_event() {
-        System.out.println("The undercover cop arrested you. GAME OVER.");
+        //handled in the main game class
     }
     // arbitrary value for now , alot bonus for correct answer on cop
     @Override public void get_money(Money m){
@@ -303,15 +304,16 @@ class CustomerGenerator {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 class Ingredient {
     private final String name;
     private int quantity;
-    private final int ppu;
+    private final int ppu; // price per unit for restocking
+    private final int initialQuantity; // Store the initial quantity
+
     public Ingredient(String name, int quantity, int restockPricePerUnit) {
         this.name = name;
         this.quantity = quantity;
+        this.initialQuantity = quantity; // Set initial quantity upon creation
         this.ppu = restockPricePerUnit;
     }
     public String get_name() {
@@ -324,30 +326,34 @@ class Ingredient {
         return ppu;
     }
     public void addQuantity(int amount) {
-        quantity = quantity+amount;
+        quantity = quantity + amount;
     }
     public void useQuantity(int amount) {
-        quantity = quantity-amount;
+        if (quantity >= amount) {
+            quantity = quantity - amount;
+        } else {
+            quantity = 0; // Prevent negative quantity
+        }
+    }
+    // Method to reset quantity to its initial value
+    public void resetQuantity() {
+        this.quantity = this.initialQuantity;
     }
 }
 
 class Inventory {
-    // aggregation , even though Ingredient[] is private and the constructor creates it itself , we still have a getter
-    // for the array in the class which allows the user to retrieve reference of the aggregated object
-    private final Ingredient[] ingredients;  // array will contain an object for every TYPE of ingredient
-    private final int size; // we will predefine size e.g our ramen takes 4 main ingredients that need restocking everyday
+    private final Ingredient[] ingredients;
+    private final int size; 
 
     public Inventory(int size) {
         this.size = size;
         ingredients = new Ingredient[size];
     }
-    // will add 1 to type of ingredient on where that type is stored in array using index
     public void add_ingredient(Ingredient ingredient, int index) {
         if (index >= 0 && index < size) {
             ingredients[index] = ingredient;
         }
     }
-    // will return us what TYPE of ingredient is stored in the array at the index , e.g at 0th index were storing noodles
     public Ingredient get_ingredient(int index) {
         if (index >= 0 && index < size) {
             return ingredients[index];
@@ -362,7 +368,6 @@ class Inventory {
             }
         }
     }
-    // if we need 1 ingredient of every type for ramen, we check if we have 1 of every type
     public boolean has_enough_ingredients() {
         for (int i = 0; i < size; i++) {
             if (ingredients[i] == null || ingredients[i].get_quantity() <= 0) {
@@ -371,7 +376,6 @@ class Inventory {
         }
         return true;
     }
-    // subtract one from every type of ingredient, should ONLY be called if has_enough_ingredients returns true
     public void use_ingredients() {
         for (int i = 0; i < size; i++) {
             if (ingredients[i] != null) {
@@ -379,17 +383,27 @@ class Inventory {
             }
         }
     }
-    // add amount bought into the type of ingredient bought
     public int restockIngredient(int index, int amount, int playerMoney) {
-        Ingredient ingredient = get_ingredient(index); // checking which type of ingredient is being bought
-        if (ingredient != null) {
+        Ingredient ingredient = get_ingredient(index); 
+        if (ingredient != null && amount > 0) { // Ensure amount is positive
             int totalCost = amount * ingredient.get_ppu();
             if (playerMoney >= totalCost) {
-                ingredient.addQuantity(amount);
-                return totalCost; // subtraction of player money can be done in gameloop using returned cost
+                // The actual addition to quantity will be handled by the Game class after deducting money
+                return totalCost; 
+            } else {
+                return -1; // Indicate not enough money
             }
         }
-        return 0; // in case index didnt contain any ingredient
+        return 0; 
+    }
+
+    // Method to reset all ingredients to their initial quantities
+    public void resetInventory() {
+        for (int i = 0; i < size; i++) {
+            if (ingredients[i] != null) {
+                ingredients[i].resetQuantity();
+            }
+        }
     }
 }
 // manages our ramen shop where we serve ramen, it requires our inventory to see if ingredients are enough e.t.c
