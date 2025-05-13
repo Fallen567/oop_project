@@ -23,6 +23,118 @@ class FileReader {
     }
 }
 
+// normally if we pass money (type int or double) into a function its passed by value so any changes made to it are made to the copy
+// to solve this we can treat int money as an OBJECT , this way it will be passed to functions by reference and any changes
+// made to money inside function will also take effect outside the function
+// for this reason this class is used JUST so that money can be treated as an object instead of integer
+class Money{
+    private double money;
+    private static final double normalcustomermoney = 10;
+    private static final double gamblercustomermoney = 20;
+    private static final double undercovercopmoney = 40;
+    private static final double bribe = 100;
+    private static final double starting_money = 100;
+
+    public double get_money(){
+        return this.money;
+    }
+    public double get_normalcustomermoney(){
+        return normalcustomermoney;
+    }
+    public double get_gamblercustomermoney(){
+        return gamblercustomermoney;
+    }
+    public double get_undercovercopmoney(){
+        return undercovercopmoney;
+    }
+    public double get_bribe(){ return bribe;}
+    public double get_starting_money(){return starting_money;}
+
+    public Money(){
+        this.money = 0;
+    }
+    public Money(double m){
+        this.money = m;
+    }
+    public void set_money(double money){
+        this.money = money;
+    }
+    public void change_money(double change){
+        this.money = this.money + change;
+        // ensuring money doesnt go negative during restocks
+        if (this.money < 0){
+            this.money = 0;
+        }
+    }
+}
+
+// wrapper class for suspicion so we can change suspicion in methods
+class Suspicion{
+    private int suspicion;
+    private static final int normalcustomersusincrease = 20;
+    private static final int gamblercustomersusincrease = 20;
+    private static final int normalcustomersusdecrease = -10;
+    private static final int gamblercustomersusdecrease = -10;
+    private static final int undercovercopsusdecrease = -15;
+    private static final int undercovercopsusincrease = 100;
+    private static final int customerleftsusincrease = 15;
+
+
+    public Suspicion(){
+        this.suspicion = 0;
+    }
+
+    public int get_normalcustomersusincrease(){
+        return normalcustomersusincrease;
+    }
+    public int get_gamblercustomersusincrease(){
+        return gamblercustomersusincrease;
+    }
+    public int get_normalcustomersusdecrease(){
+        return normalcustomersusdecrease;
+    }
+    public int get_gamblercustomersusdecrease(){return gamblercustomersusdecrease; }
+    public int get_undercovercopsusdecrease(){return undercovercopsusdecrease; }
+    public int get_undercovercopsusincrease(){return undercovercopsusincrease;}
+    public int get_customerleftsusincrease(){return customerleftsusincrease;}
+
+    public Suspicion(int s){
+        this.suspicion = s;
+    }
+    public int get_suspicion(){
+        return this.suspicion;
+    }
+    public void set_suspicion(int suspicion){
+        this.suspicion = suspicion;
+    }
+    public void change_suspicion(int change){
+        this.suspicion = this.suspicion + change;
+        if (this.suspicion >= 100){
+            this.suspicion = 100;
+        }
+        if (this.suspicion < 0){
+            this.suspicion = 0;
+        }
+    }
+    public boolean sus_reached_full(){
+        if(this.suspicion >= 100){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+    // after a day ends we can call this function with the day number as argument and it will start new day with the appropriate suspicion
+    public void suspicion_newday(int day){
+        if(day == 2){
+            this.suspicion = 20;
+        }
+        else if(day == 3){
+            this.suspicion = 30;
+        }
+    }
+}
+
 abstract class Customer {
     // protected so we can access these in subclasses without the getters
     protected String name;
@@ -41,7 +153,9 @@ abstract class Customer {
         return dialogue;
     }
     public abstract boolean is_gambler(); // this will be implemented in all subclasses as it checks whether the user guessed right or wrong
-    public abstract double get_money(); // each subclass will have separate implementation using separate amount of money
+    public abstract void get_money(Money m); // each subclass will have separate implementation using separate amount of money, this method will change money variable\
+    public abstract void right_room(Suspicion s); // each customer has own implementation of when the customer is sent to the right room
+    public abstract void wrong_room(Suspicion s); // each customer has own implementation of when sent to wrong room
 }
 
 class NormalCustomer extends Customer {
@@ -51,8 +165,8 @@ class NormalCustomer extends Customer {
 
     // this method will be run automatically  when this class is loaded all of the names , dialogues from txt file will be loaded into the array list at once
     static {
-        NormalCustomerNames = FileReader.read_from_file("classes/names.txt");
-        NormalCustomerDialogues = FileReader.read_from_file("classes/customer_dialogues.txt"); 
+        NormalCustomerNames = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\names.txt"); // insert your own computer path of file
+        NormalCustomerDialogues = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\dialogues.txt");
     }
 
     // the constructor will call the superconstructor and will pass in a random name and a random dialogue extracted from txt file and stored in array list
@@ -64,8 +178,17 @@ class NormalCustomer extends Customer {
         return false;
     }
     // arbitrary value for now we can change later
-    @Override public double get_money(){
-        return 10;
+    @Override public void get_money(Money m){
+        // increment money by 10
+        m.change_money(m.get_normalcustomermoney());
+    }
+
+    // two suspicion methods , 1 for sending normalcustomer to right room and 1 for wrong room
+    @Override public void right_room(Suspicion s){
+        s.change_suspicion(s.get_normalcustomersusdecrease());
+    }
+    @Override public void wrong_room(Suspicion s){
+        s.change_suspicion(s.get_normalcustomersusincrease());
     }
 }
 
@@ -76,9 +199,8 @@ class GamblerCustomer extends Customer {
 
     // this is a method that will be run automatically  when this class is loaded, so all of the names , dialogues from txt file will be loaded into the array list at once
     static {
-        gambler_names = FileReader.read_from_file("classes/names.txt");
-        gambler_dialogues = FileReader.read_from_file("classes/gambler_dialogues.txt");
-    // we can add more gambler dialogues later if we want to
+        gambler_names = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\names.txt");
+        gambler_dialogues = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\dialogues.txt");
     }
 
     // the constructor will call the superconstructor and will pass in a random name and a random dialogue extracted from txt file and stored in array list
@@ -90,8 +212,16 @@ class GamblerCustomer extends Customer {
         return true;
     }
     // arbitrary value for now we can change later , slight bonus for correct answer on gambler
-    @Override public double get_money(){
-        return 20;
+    @Override public void get_money(Money m){
+        m.change_money(m.get_gamblercustomermoney());
+    }
+
+    // 2 suspicion methods , 1 for right room 1 for wrong room
+    @Override public void right_room(Suspicion s){
+        s.change_suspicion(s.get_gamblercustomersusdecrease());
+    }
+    @Override public void wrong_room(Suspicion s){
+        s.change_suspicion(s.get_gamblercustomersusincrease());
     }
 }
 
@@ -112,8 +242,8 @@ class UndercoverCop extends SpecialCustomer implements UndercovercopMarker {
 
     // this is a method that will be run automatically  when this class is loaded, so all of the names , dialogues from txt file will be loaded into the array list at once
     static {
-        cop_names = FileReader.read_from_file("classes/names.txt");
-        cop_dialogues = FileReader.read_from_file("classes/cop_dialogues.txt");
+        cop_names = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\names.txt");
+        cop_dialogues = FileReader.read_from_file("D:\\ideaJ projects\\testproject\\src\\dialogues.txt");
     }
 
     // the constructor will call the superconstructor and will pass in a random name and a random dialogue extracted from txt file and stored in array list
@@ -134,8 +264,21 @@ class UndercoverCop extends SpecialCustomer implements UndercovercopMarker {
         System.out.println("The undercover cop arrested you. GAME OVER.");
     }
     // arbitrary value for now , alot bonus for correct answer on cop
-    @Override public double get_money(){
-        return 40;
+    @Override public void get_money(Money m){
+        m.change_money(m.get_undercovercopmoney());
+    }
+
+    // 2 functions for suspicion 1 for right room 1 for wrong , no need to use wrong one if we will end the game right away
+    @Override public void right_room(Suspicion s){
+        s.change_suspicion(s.get_undercovercopsusdecrease());
+    }
+    @Override public void wrong_room(Suspicion s){
+        s.change_suspicion(s.get_undercovercopsusincrease());
+    }
+
+    // bribing if getting caught method will decrement required amount from money
+    public void bribing(Money m){
+        m.change_money(m.get_bribe());
     }
 }
 
@@ -190,7 +333,7 @@ class Ingredient {
 
 class Inventory {
     // aggregation , even though Ingredient[] is private and the constructor creates it itself , we still have a getter
-    // for the array in the class which allows the user to retrieve reference of the aggregated object 
+    // for the array in the class which allows the user to retrieve reference of the aggregated object
     private final Ingredient[] ingredients;  // array will contain an object for every TYPE of ingredient
     private final int size; // we will predefine size e.g our ramen takes 4 main ingredients that need restocking everyday
 
@@ -287,3 +430,4 @@ class Shop {
         System.out.println("Ingredients used for serving ramen have been deducted from inventory.");
     }
 }
+
