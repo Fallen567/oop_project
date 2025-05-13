@@ -17,9 +17,7 @@ class Game {
     private final Shop shop; // Shop object that manages inventory and operations
     private final Suspicion suspicion; // Using the Suspicion wrapper class from Main.java
 
-    /**
-     * Constructor - initializes a new game with fresh inventory and suspicion
-     */
+    /* Constructor - initializes a new game with fresh inventory and suspicion */
     public Game() {
         // Initialize the shop with a new inventory
         Inventory inventory = new Inventory(4);
