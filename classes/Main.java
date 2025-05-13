@@ -27,7 +27,7 @@ class FileReader {
 // to solve this we can treat int money as an OBJECT , this way it will be passed to functions by reference and any changes
 // made to money inside function will also take effect outside the function
 // for this reason this class is used JUST so that money can be treated as an object instead of integer
-class Money{
+class Money {
     private double money;
     private static final double normalcustomermoney = 10;
     private static final double gamblercustomermoney = 20;
@@ -35,36 +35,50 @@ class Money{
     private static final double bribe = 100;
     private static final double starting_money = 100;
 
-    public double get_money(){
-        return this.money;
-    }
-    public double get_normalcustomermoney(){
-        return normalcustomermoney;
-    }
-    public double get_gamblercustomermoney(){
-        return gamblercustomermoney;
-    }
-    public double get_undercovercopmoney(){
-        return undercovercopmoney;
-    }
-    public double get_bribe(){ return bribe;}
-    public double get_starting_money(){return starting_money;}
-
-    public Money(){
+    public Money() {
         this.money = 0;
     }
-    public Money(double m){
-        this.money = m;
+
+    public Money(double initialAmount) { // If you have this constructor
+        this.money = initialAmount;
     }
-    public void set_money(double money){
-        this.money = money;
+
+    public double get_money() {
+        return this.money;
     }
-    public void change_money(double change){
-        this.money = this.money + change;
-        // ensuring money doesnt go negative during restocks
-        if (this.money < 0){
-            this.money = 0;
+
+    public void set_money(double amount) {
+        this.money = amount;
+    }
+
+    // This is the crucial method to check and correct:
+    public void change_money(double amount_to_change) {
+        this.money += amount_to_change; // Ensure it adds the parameter 'amount_to_change'
+        
+        // Ensure money doesnt go below zero during restocking
+        if (this.money < 0) {
+            this.money = 0; // Or handle as per your game's logic
         }
+    }
+
+    public double get_normalcustomermoney() {
+        return normalcustomermoney;
+    }
+
+    public double get_gamblercustomermoney() {
+        return gamblercustomermoney;
+    }
+
+    public double get_undercovercopmoney() {
+        return undercovercopmoney; // Should return 40
+    }
+
+    public double get_bribe() {
+        return bribe;
+    }
+
+    public double get_starting_money() {
+        return starting_money;
     }
 }
 
@@ -219,10 +233,10 @@ class GamblerCustomer extends Customer {
 
     // 2 suspicion methods , 1 for right room 1 for wrong room
     @Override public void right_room(Suspicion s){
-        s.change_suspicion(s.get_gamblercustomersusincrease());
+        s.change_suspicion(s.get_gamblercustomersusdecrease());
     }
     @Override public void wrong_room(Suspicion s){
-        // NOW, sending a gambler to the ramen shop does NOTHING to suspicion
+        s.change_suspicion(s.get_gamblercustomersusincrease());
     }
 }
 

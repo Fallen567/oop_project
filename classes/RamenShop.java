@@ -1,24 +1,28 @@
 import java.lang.*;
 import java.util.Scanner;
 
-/**
- * Main game class for the Ramen Shop Simulator
+/* Main game class for the Ramen Shop Simulator
  * Manages the game state, shop operations, and game loop
  */
+
 class Game {
     private static final int MAX_CUSTOMERS = 10; // Maximum number of customers per day
     private static final int MAX_DAYS = 3; // Maximum number of days to play
     private static final int MAX_SUSPICION = 100; // Maximum suspicion meter value
     private boolean continueGame = true; // Flag to continue the game
-    private double money = 100.0; // Starting money
-    private int suspicionMeter = 0; // Starting suspicion meter value
+    private Money money = new Money(); // Using Money object instead of primitive
     private int currentDay = 1; // Current day in the game
     
     private final Shop shop; // Shop object that manages inventory and operations
     private final Suspicion suspicion; // Using the Suspicion wrapper class from Main.java
 
-    /* Constructor - initializes a new game with fresh inventory and suspicion */
+    /* 
+    Constructor - initializes a new game with fresh inventory and suspicion
+    */
     public Game() {
+        // Initialize money with starting amount
+        money.set_money(100); // FIXED: Set the initial amount correctly
+        
         // Initialize the shop with a new inventory
         Inventory inventory = new Inventory(4);
         inventory.add_ingredient(new Ingredient("Noodles", 10, 5), 0);
@@ -26,25 +30,26 @@ class Game {
         inventory.add_ingredient(new Ingredient("Meat", 10, 6), 2);
         inventory.add_ingredient(new Ingredient("Toppings", 10, 3), 3);
         shop = new Shop(inventory);
-        suspicion = new Suspicion(); // Initialize suspicion object
+        
+        // Initialize suspicion with zero value
+        suspicion = new Suspicion();
     }
 
-    /**
+    /*
      * Reset the game state for playing again without creating a new Game instance
      */
     private void resetGameForPlayAgain() {
         // Reset all game state variables
         continueGame = true;
         currentDay = 1;
-        money = 100.0;
-        suspicionMeter = 0;
+        money.set_money(100.0);
         suspicion.set_suspicion(0);
         
         // Reset the shop's inventory using resetInventory instead of creating a new inventory
         shop.getInventory().resetInventory();
     }
 
-    /**
+    /*
      * Asks the player if they want to play again and handles the response
      * @param sc Scanner for user input
      */
@@ -76,7 +81,7 @@ class Game {
         }
     }
 
-    /**
+    /*
      * The main game loop - runs through all days until the game ends
      */
     public void startGame() {
@@ -95,8 +100,7 @@ class Game {
                     System.out.println("|-----------------------------------------------------------|");
                     
                     // Check suspicion level at the start of each day
-                    suspicionMeter = suspicion.get_suspicion();
-                    if (suspicionMeter >= MAX_SUSPICION) {
+                    if (suspicion.get_suspicion() >= MAX_SUSPICION) {
                         System.out.println("|-----------------------------------------------------------|");
                         System.out.printf("| %-57s |\n", "You got caught by undercover cop. Game Over.");
                         System.out.println("|-----------------------------------------------------------|");
@@ -112,16 +116,15 @@ class Game {
                     // End of day summary
                     System.out.println("|-----------------------------------------------------------|");
                     System.out.printf("| %-57s |\n", "End of day " + currentDay + ".");
-                    System.out.printf("| %-57s |\n", "Current money: $" + money);
-                    System.out.printf("| %-57s |\n", "Suspicion meter: " + suspicionMeter + "%");
+                    System.out.printf("| %-57s |\n", "Current money: $" + money.get_money());
+                    System.out.printf("| %-57s |\n", "Suspicion meter: " + suspicion.get_suspicion() + "%");
                     System.out.println("|-----------------------------------------------------------|");
                     
                     // Apply suspicion increase for the next day
                     suspicion.suspicion_newday(currentDay);
-                    suspicionMeter = suspicion.get_suspicion();
                     
                     // Check if suspicion reached max after day end increase
-                    if (suspicionMeter >= MAX_SUSPICION && continueGame) {
+                    if (suspicion.get_suspicion() >= MAX_SUSPICION && continueGame) {
                         System.out.println("|-----------------------------------------------------------|");
                         System.out.printf("| %-57s |\n", "You got caught by undercover cop. Game Over.");
                         System.out.println("|-----------------------------------------------------------|");
@@ -174,8 +177,8 @@ class Game {
             // Display current status
             System.out.println("|-----------------------------------------------------------|");
             System.out.printf("| %-57s |\n", "You have " + (MAX_CUSTOMERS - customers) + " customers left to send.");
-            System.out.printf("| %-57s |\n", "Current money: $" + money);
-            System.out.printf("| %-57s |\n", "Suspicion meter: " + suspicionMeter + "%");
+            System.out.printf("| %-57s |\n", "Current money: $" + money.get_money());
+            System.out.printf("| %-57s |\n", "Suspicion meter: " + suspicion.get_suspicion() + "%");
             System.out.println("|-----------------------------------------------------------|");
 
             // Generate a random customer
@@ -221,8 +224,7 @@ class Game {
             customers++;
 
             // Check for max suspicion after customer interaction
-            suspicionMeter = suspicion.get_suspicion();
-            if (suspicionMeter >= MAX_SUSPICION) {
+            if (suspicion.sus_reached_full()) {
                 System.out.println("|-----------------------------------------------------------|");
                 System.out.printf("| %-57s |\n", "You got caught by undercover cop. Game Over.");
                 System.out.println("|-----------------------------------------------------------|");
@@ -240,16 +242,13 @@ class Game {
         
         // Final suspicion check at end of day (if shop didn't close early)
         if (continueGame && !shopClosedEarly) {
-            suspicionMeter = suspicion.get_suspicion();
-            
             // Cap suspicion at MAX_SUSPICION
-            if (suspicionMeter > MAX_SUSPICION) {
-                suspicionMeter = MAX_SUSPICION;
+            if (suspicion.get_suspicion() > MAX_SUSPICION) {
+                suspicion.set_suspicion(MAX_SUSPICION);
             }
-            suspicion.set_suspicion(suspicionMeter);
 
             // Check if caught by cop at end of day
-            if (suspicionMeter >= MAX_SUSPICION) {
+            if (suspicion.sus_reached_full()) {
                 System.out.println("|-----------------------------------------------------------|");
                 System.out.printf("| %-57s |\n", "You got caught by undercover cop. Game Over.");
                 System.out.println("|-----------------------------------------------------------|");
@@ -260,13 +259,12 @@ class Game {
         return shopClosedEarly;
     }
 
-    /**
-     * Handles the player's choice for a customer interaction
-     * @param choice Player's choice (1: Serve Ramen, 2: Send to Gambling Room)
-     * @param customer The current customer
-     * @param sc Scanner for user input
-     * @return boolean indicating if the customer was served successfully
+    /* Handles the player's choice for a customer interaction
+     * Player's choice (1: Serve Ramen, 2: Send to Gambling Room)
+     * customer -> The current customer
+     * boolean indicating if the customer was served successfully
      */
+
     private boolean handleCustomerChoice(int choice, Customer customer, Scanner sc) {
         if (choice == 2) { // Send to gambling room
             if (customer instanceof UndercoverCop) {
@@ -274,7 +272,7 @@ class Game {
                 ((UndercoverCop) customer).trigger_special_event();
                 
                 // Handle bribe interaction if player has enough money
-                if (money >= 100) {
+                if (money.get_money() >= 100) {
                     System.out.println("|-----------------------------------------------------------|");
                     System.out.printf("| %-57s |\n", "An undercover cop caught you!");
                     System.out.printf("| %-57s |\n", "You can bribe the cop for $100 to avoid arrest.");
@@ -285,24 +283,24 @@ class Game {
                     try {
                         decision = sc.nextInt();
                         sc.nextLine(); // Consume newline
-                    } catch (Exception e) {
+                    } 
+                    catch (Exception e) {
                         sc.nextLine(); // Consume invalid input
                         decision = 2; // Default to not bribing
                         System.out.println("Invalid input for bribe. Assuming no bribe.");
                     }
 
                     if (decision == 1) { // Player chooses to bribe
-                        money -= 100;
+                        money.change_money(-money.get_bribe());
                         suspicion.set_suspicion(0); // Bribe resets suspicion
-                        suspicionMeter = suspicion.get_suspicion();
 
                         System.out.println("|-----------------------------------------------------------|");
                         System.out.printf("| %-57s |\n", "You chose to bribe the cop. You lost $100.");
-                        System.out.printf("| %-57s |\n", "Amount left: $" + money);
+                        System.out.printf("| %-57s |\n", "Amount left: $" + money.get_money());
                         System.out.println("|-----------------------------------------------------------|");
 
                         // Check if player is now bankrupt
-                        if (money <= 0) {
+                        if (money.get_money() <= 0) {
                             System.out.println("|-----------------------------------------------------------|");
                             System.out.printf("| %-57s |\n", "You paid the bribe, but now you're bankrupt!");
                             System.out.printf("| %-57s |\n", "Game Over.");
@@ -325,53 +323,66 @@ class Game {
                     continueGame = false;
                 }
                 return true; // Customer interaction succeeded (despite possible game over)
-            } else if (customer.is_gambler()) { // Gambler sent to gambling room (correct)
+            } else if (customer.is_gambler()) { 
+                // Gambler sent to gambling room (correct)
                 customer.right_room(suspicion);
-                suspicionMeter = suspicion.get_suspicion();
-                
                 System.out.println("|-----------------------------------------------------------|");
                 System.out.printf("| %-57s |\n", "You sent a gambler to the gambling room.");
-                System.out.printf("| %-57s |\n", "Suspicion meter increased to " + suspicionMeter + "%.");
+                System.out.printf("| %-57s |\n", "Suspicion meter decreased to " + suspicion.get_suspicion() + "%.");
                 
-                money += 30; // Earn money from gambling
+                money.change_money(money.get_gamblercustomermoney()); // Earn money from gambling
                 System.out.printf("| %-57s |\n", "Money earned from gambling: $30");
-                System.out.printf("| %-57s |\n", "Current money: $" + money);
+                System.out.printf("| %-57s |\n", "Current money: $" + money.get_money());
                 System.out.println("|-----------------------------------------------------------|");
-            } else { // Normal customer sent to gambling room (incorrect)
+            } else { 
+                // Normal customer sent to gambling room (incorrect)
                 customer.wrong_room(suspicion);
-                suspicionMeter = suspicion.get_suspicion();
-                
                 System.out.println("|-----------------------------------------------------------|");
                 System.out.printf("| %-57s |\n", "You sent a regular customer to the gambling room.");
-                System.out.printf("| %-57s |\n", "Suspicion meter increased to " + suspicionMeter + "%");
+                System.out.printf("| %-57s |\n", "Suspicion meter increased to " + suspicion.get_suspicion() + "%");
                 System.out.println("|-----------------------------------------------------------|");
             }
             return true; // Customer interaction succeeded
         } else if (choice == 1) { // Serve ramen
             if (shop.serveRamen()) { // Check if enough ingredients
-                // Get payment from customer
-                Money customerPayment = new Money();
-                customer.get_money(customerPayment);
-                double payment = customerPayment.get_money();
-                money += payment;
-                
+
+                double payment = 0; // Initialize payment variable
+
+                if (customer instanceof UndercoverCop) {
+                    Money customerPayment = new Money();
+                    customer.get_money(customerPayment);
+                    payment = money.get_undercovercopmoney(); // Get the specific cop payment amount
+                    money.change_money(payment); // Add cop's payment
+                    System.out.println("|-----------------------------------------------------------|");
+                    System.out.printf("| %-57s |\n", "You served ramen to an undercover cop.");
+                    System.out.printf("| %-57s |\n", "Money earned: $" + payment);
+                } else {
+                    // Get payment from regular customer or gambler
+                    Money customerPayment = new Money();
+                    customer.get_money(customerPayment);
+                    payment = customerPayment.get_money();
+                    money.change_money(payment);
+
+                    // Display results for non-cop customers
+                    System.out.println("|-----------------------------------------------------------|");
+                    System.out.printf("| %-57s |\n", "You served ramen to the customer.");
+                    System.out.printf("| %-57s |\n", "Money earned: $" + payment);
+                }
+ 
                 // Adjust suspicion based on customer type
                 if (customer.is_gambler()) {
                     customer.wrong_room(suspicion); // Sending gambler to ramen is wrong
-                } else {
-                    customer.right_room(suspicion); // Sending normal customer to ramen is right
+                } else { // This includes UndercoverCop and normal customers
+                    customer.right_room(suspicion); // Sending normal customer/cop to ramen is right
                 }
-                suspicionMeter = suspicion.get_suspicion();
                 
-                // Display results
-                System.out.println("|-----------------------------------------------------------|");
-                System.out.printf("| %-57s |\n", "You served ramen to the customer.");
-                System.out.printf("| %-57s |\n", "Money earned: $" + payment);
-                System.out.printf("| %-57s |\n", "Current money: $" + money);
-                System.out.printf("| %-57s |\n", "Suspicion: " + suspicionMeter + "%");
+                // Common display for current money and suspicion for all served customers
+                System.out.printf("| %-57s |\n", "Current money: $" + money.get_money());
+                System.out.printf("| %-57s |\n", "Suspicion: " + suspicion.get_suspicion() + "%");
                 System.out.println("|-----------------------------------------------------------|");
                 return true; // Successfully served ramen
-            } else { // Not enough ingredients
+            } else { 
+                // Not enough ingredients
                 System.out.println("|-----------------------------------------------------------|");
                 System.out.printf("| %-57s |\n", "You ran out of ingredients!");
                 System.out.println("|-----------------------------------------------------------|");
@@ -386,7 +397,7 @@ class Game {
         }
     }
 
-    /**
+    /*
      * Handles the shop restocking process between days
      * @param sc Scanner for user input
      */
@@ -415,7 +426,7 @@ class Game {
                 shop.displayInventory();
                 
                 System.out.println("|-----------------------------------------------------------|");
-                System.out.printf("| %-57s |\n", "Current money: $" + money);
+                System.out.printf("| %-57s |\n", "Current money: $" + money.get_money());
                 System.out.printf("| %-57s |\n", "Which ingredient? (1-Noodles, 2-Broth, 3-Meat, 4-Toppings, 0-Exit): ");
                 System.out.println("|-----------------------------------------------------------|");
                 
@@ -470,9 +481,9 @@ class Game {
                 }
                 
                 // Calculate cost and check if affordable
-                int cost = shop.getInventory().restockIngredient(index, units, (int)money);
+                int cost = shop.getInventory().restockIngredient(index, units, (int)money.get_money());
                 
-                if (cost == -1 || cost > money) { // Not enough money
+                if (cost == -1 || cost > money.get_money()) { // Not enough money
                     System.out.println("|-----------------------------------------------------------|");
                     System.out.printf("| %-57s |\n", "Not enough money to restock this amount.");
                     System.out.println("|-----------------------------------------------------------|");
@@ -481,13 +492,13 @@ class Game {
                     System.out.printf("| %-57s |\n", "Could not restock. Invalid ingredient or amount.");
                     System.out.println("|-----------------------------------------------------------|");
                 } else { // Successful restock
-                    money -= cost;
+                    money.set_money(money.get_money() - cost);
                     shop.getInventory().get_ingredient(index).addQuantity(units); // Add units to inventory
                     
                     String ingredientName = shop.getInventory().get_ingredient(index).get_name();
                     System.out.println("|-----------------------------------------------------------|");
                     System.out.printf("| %-57s |\n", "Restocked " + units + " units of " + ingredientName + ".");
-                    System.out.printf("| %-57s |\n", "Current money: $" + money);
+                    System.out.printf("| %-57s |\n", "Current money: $" + money.get_money());
                     System.out.println("|-----------------------------------------------------------|");
                 }
             } else if (choice == 2) { // Player doesn't want to restock
