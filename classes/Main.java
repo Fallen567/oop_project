@@ -29,6 +29,7 @@ class FileReader {
 // for this reason this class is used JUST so that money can be treated as an object instead of integer
 class Money {
     private double money;
+    private static final double no_money = 0;
     private static final double normalcustomermoney = 10;
     private static final double gamblercustomermoney = 20;
     private static final double undercovercopmoney = 40;
@@ -80,11 +81,16 @@ class Money {
     public double get_starting_money() {
         return starting_money;
     }
+    public double get_no_money() {
+        return no_money;
+    }
 }
 
 // wrapper class for suspicion so we can change suspicion in methods
 class Suspicion{
     private int suspicion;
+    private static final int no_suspicion = 0;
+    private static final int max_suspicion = 100;
     private static final int normalcustomersusincrease = 20;
     private static final int gamblercustomersusincrease = 20;
     private static final int normalcustomersusdecrease = -10;
@@ -96,6 +102,14 @@ class Suspicion{
 
     public Suspicion(){
         this.suspicion = 0;
+    }
+
+    public int get_no_suspicion(){
+        return no_suspicion;
+    }
+
+    public int get_max_suspicion(){
+        return max_suspicion;
     }
 
     public int get_normalcustomersusincrease(){
@@ -151,9 +165,8 @@ class Suspicion{
 }
 
 abstract class Customer {
-    // protected so we can access these in subclasses without the getters
-    protected String name;
-    protected String dialogue;
+    private String name;
+    private String dialogue;
 
     // each subclass constructor will randomly choose a name and dialogue from txt file and pass it into the superclass Customer constructor
     public Customer(String name, String dialogue) // no need of no arg constructor if we are not gonna call it in subclass
