@@ -205,7 +205,6 @@ class NormalCustomer extends Customer {
     @Override public boolean is_gambler() {
         return false;
     }
-    // arbitrary value for now we can change later
     @Override public void get_money(Money m){
         // increment money by 10
         m.change_money(m.get_normalcustomermoney());
