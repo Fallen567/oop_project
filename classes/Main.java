@@ -55,7 +55,7 @@ class Money {
     // This is the crucial method to check and correct:
     public void change_money(double amount_to_change) {
         this.money += amount_to_change; // Ensure it adds the parameter 'amount_to_change'
-        
+
         // Ensure money doesnt go below zero during restocking
         if (this.money < 0) {
             this.money = 0; // Or handle as per your game's logic
@@ -334,12 +334,12 @@ class Ingredient {
     private final String name;
     private int quantity;
     private final int ppu; // price per unit for restocking
-    private final int initialQuantity; // Store the initial quantity
+    private final int initialQuantity; // store the initial quantity
 
     public Ingredient(String name, int quantity, int restockPricePerUnit) {
         this.name = name;
         this.quantity = quantity;
-        this.initialQuantity = quantity; // Set initial quantity upon creation
+        this.initialQuantity = quantity; // set initial quantity upon creation
         this.ppu = restockPricePerUnit;
     }
     public String get_name() {
@@ -361,7 +361,7 @@ class Ingredient {
             quantity = 0; // Prevent negative quantity
         }
     }
-    // Method to reset quantity to its initial value
+    // method to reset quantity to its initial value
     public void resetQuantity() {
         this.quantity = this.initialQuantity;
     }
@@ -369,7 +369,7 @@ class Ingredient {
 
 class Inventory {
     private final Ingredient[] ingredients;
-    private final int size; 
+    private final int size;
 
     public Inventory(int size) {
         this.size = size;
@@ -410,20 +410,20 @@ class Inventory {
         }
     }
     public int restockIngredient(int index, int amount, int playerMoney) {
-        Ingredient ingredient = get_ingredient(index); 
-        if (ingredient != null && amount > 0) { // Ensure amount is positive
+        Ingredient ingredient = get_ingredient(index);
+        if (ingredient != null && amount > 0) { // ensure amount is positive
             int totalCost = amount * ingredient.get_ppu();
             if (playerMoney >= totalCost) {
-                // The actual addition to quantity will be handled by the Game class after deducting money
-                return totalCost; 
+                // the actual addition to quantity will be handled by the Game class after deducting money
+                return totalCost;
             } else {
-                return -1; // Indicate not enough money
+                return -1; // indicate not enough money
             }
         }
-        return 0; 
+        return 0;
     }
 
-    // Method to reset all ingredients to their initial quantities
+    // method to reset all ingredients to their initial quantities
     public void resetInventory() {
         for (int i = 0; i < size; i++) {
             if (ingredients[i] != null) {
@@ -461,13 +461,16 @@ class Shop {
     }
     public void decreaseInventory() {
         Inventory inventory = getInventory(); // `getInventory()` returns the inventory object
-        for (int i = 0; i < 4; i++) { // Hardcoded there are 4 types of ingredients
+        for (int i = 0; i < 4; i++)
+        { // hardcoded there are 4 types of ingredients
             Ingredient ingredient = inventory.get_ingredient(i);
-            if (ingredient != null) {
-                ingredient.useQuantity(1); // Decrease 1 unit of each ingredient
+            if (ingredient != null)
+            {
+                ingredient.useQuantity(1); // decrease 1 unit of each ingredient
             }
         }
         System.out.println("Ingredients used for serving ramen have been deducted from inventory.");
     }
 }
+
 
